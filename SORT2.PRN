@@ -1,0 +1,80 @@
+	MACRO-80 3.44	09-Dec-81	PAGE	1
+
+
+                                	.z80
+  0005                          bdos	equ	5
+  000A                          lf	equ 0Ah
+  0000                          flag 	equ 0
+  0009                          print	equ 9
+  0000                          reset 	equ 0
+  0000'                         	aseg
+  0000                          start:	org	100H
+                                
+                                
+  0100    21 0140               	ld	hl,liczby ; adres tabl
+  0103    4E                    	ld c,(hl)
+  0104    23                    	inc	hl
+  0105    E5                    	push hl
+  0106    D5                    	push de
+  0107    C5                    	push bc
+  0108    DD E5                 	push ix
+  010A    F5                    	push af
+  010B    22 013E               sort:	ld	(data), hl	; zapisanie adresu danych
+  010E    CB 84                 loop2:	res	flag, h	; ustawienie flagi
+  0110    41                    	ld	b, c	; licznik liczb
+  0111    05                    	dec	b	; dostosowanie b (czyli o -1)
+  0112    DD 2A 013E            	ld	ix, (data)	; wska?nik na dane
+  0116    DD 7E 00              next:	ld	a, (ix)	; pierwszy element
+  0119    57                    	ld	d, a	; zapamijtanie tymczasowe
+  011A    DD 5E 01              	ld	e, (ix+1)	; drugi element
+  011D    93                    	sub	e	; sprawdzenie
+  011E    38 08                 	jr	c, noex	; pierwszy < drugi , nie skacz (czyli zamien)
+  0120    DD 73 00              	ld	(ix), e	; zamiana elementow
+  0123    DD 72 01              	ld	(ix+1), d	
+  0126    CB C4                 	set	flag, h	; zapisanie ?e zmieniono
+  0128    DD 23                 noex:	inc	ix	; nastjpny element
+  012A    10 EA                 	djnz	next	; sprawdzenie czy wszystkie
+                                			; powtsrka jesli jeszcze s9 
+  012C    CB 44                 	bit	flag, h	; czy zmiana by3a?
+  012E    20 DE                 	jr	nz, loop2	; powtsrka jeli jeszcze nie posortowane
+  0130    0E 09                 	ld c,print
+  0132    11 0145               	ld de,tekst
+  0135    CD 0005               	call bdos
+  0138    0E 00                 	ld c,reset
+  013A    C3 0005               	jp bdos
+  013D    C9                    	ret
+                                ;			
+                                
+  013E                          data:	ds	2	; storage for data address
+                                
+                                	
+                                
+                                
+                                	
+  0140    04 01 05 03           liczby:	db	4,1,5,3,2
+  0144    02                    
+  0145    0A 6B 6F 6E           tekst:  db 	lf,'koniec $'
+  0149    69 65 63 20           
+  014D    24                    
+                                
+	MACRO-80 3.44	09-Dec-81	PAGE	1-1
+
+
+                                
+	MACRO-80 3.44	09-Dec-81	PAGE	S
+
+
+Macros:
+
+Symbols:
+0005 	BDOS            013E 	DATA            0000 	FLAG            
+000A 	LF              0140 	LICZBY          010E 	LOOP2           
+0116 	NEXT            0128 	NOEX            0009 	PRINT           
+0000 	RESET           010B 	SORT            0000 	START           
+0145 	TEKST           
+
+
+
+No Fatal error(s)
+
+

@@ -1,0 +1,54 @@
+	.z80
+bdos	equ	5
+lf	equ 0Ah
+flag 	equ 0
+print	equ 9
+reset 	equ 0
+	aseg
+start:	org	100H
+
+
+	ld	hl,liczby ; adres tabl
+	ld c,(hl)
+	inc	hl
+	push hl
+	push de
+	push bc
+	push ix
+	push af
+sort:	ld	(data), hl	; zapisanie adresu danych
+loop2:	res	flag, h	; ustawienie flagi
+	ld	b, c	; licznik liczb
+	dec	b	; dostosowanie b (czyli o -1)
+	ld	ix, (data)	; wska¿nik na dane
+next:	ld	a, (ix)	; pierwszy element
+	ld	d, a	; zapamiêtanie tymczasowe
+	ld	e, (ix+1)	; drugi element
+	sub	e	; sprawdzenie
+	jr	c, noex	; pierwszy < drugi , nie skacz (czyli zamien)
+	ld	(ix), e	; zamiana elementow
+	ld	(ix+1), d	
+	set	flag, h	; zapisanie ¿e zmieniono
+noex:	inc	ix	; nastêpny element
+	djnz	next	; sprawdzenie czy wszystkie
+			; powtórka jesli jeszcze s¹ 
+	bit	flag, h	; czy zmiana by³a?
+	jr	nz, loop2	; powtórka jeœli jeszcze nie posortowane
+	ld c,print
+	ld de,tekst
+	call bdos
+	ld c,reset
+	jp bdos
+	ret
+;			
+
+data:	ds	2	; storage for data address
+
+	
+
+
+	
+liczby:	db	4,1,5,3,2
+tekst:  db 	lf,'koniec $'
+
+	end

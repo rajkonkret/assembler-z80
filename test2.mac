@@ -1,0 +1,116 @@
+	.z80
+bdos	equ	5
+lf	equ 0Ah
+flag 	equ 0
+print	equ 9
+reset 	equ 0
+	aseg
+start:	org	100H
+	ld de,przed ; napis pocz¹tkowy
+	call wysw
+	call wysw2	; wysw ciag przed posortowaniem	
+	call sort2	; skok do procedury sortowania
+	ld e,lf	; nastêpna linia
+	ld c,2
+	call bdos
+	ld de,wyn	;napis po posortowaniu
+	call wysw
+	call wysw2	; wyswietlenie ci¹gu po posortowaniu
+	ld de,tekst ; napis koniec
+	call wysw
+	call stop	; koniec programu zgodnie z systemem cpm2
+	
+	ret
+
+wysw2:	ld hl,liczby ; procedura wyswietlenia ciagu
+	
+	ld c, (hl)
+	
+	inc hl
+loop:	ld d,(hl) ; petla tak aby wszystkie wyswietlic
+	push bc
+	push de	; zapamietanie bo wysw zmienia zawartoœæ
+	
+	
+	push hl ; zapamietanie pozycji
+	push af	; procedura zmienia a
+	xor	a
+	ld a,d ; liczba do a
+	and	0fh ; tylko mniej znacz¹ce
+	add	a,90H	;magiczne operacje, 
+	daa		;ktore wartosc cyfry hex
+	adc	a,40H	;zamieniaja na ASCII
+	daa		;0-9 30-39 A-F 41-45
+	
+	ld ix,robocze	
+	ld (ix),a	; zapamietanie w roboczych po przemianie na ascii
+	xor a
+	rld		;4 bardziej znaczace 		z(hl)			bity do a 
+	add	a,90H	;magiczne operacje, 
+	daa		;ktore wartosc cyfry hex
+	adc	a,40H	;zamieniaja na ASCII
+	daa		;0-9 30-39 A-F 41-45
+	
+	ld	e,a	;znak do wypisania do e
+	ld	c,2	;funkcja pisz
+	call	bdos
+	ld e,(ix)	;mniej znacz¹ce do de tak by wypisaæ na ekranie
+	ld c,2
+	call bdos	
+	ld	e,104	; literka h czyli hexadecymalnie
+	ld	c,2
+	call bdos
+	ld	e,44	; przecinek po liczbie
+	ld	c,2
+	call bdos
+	;inc hl
+	pop af
+	pop hl
+	pop de
+	ld (hl),d ; zapamiêtanie d
+	inc hl	; licznik na kolejn¹ liczbê
+ 	pop bc
+	dec c
+	jp nz, loop ; czy wszystkie liczby?
+	ret
+
+wysw:   ld c,print	; wyœwietlenie napisu gdzie de wskazuje na ci¹g znaków
+;	ld de,tekst
+	call bdos
+	ret
+stop:	ld c,reset	; procedura wyjœcia z programu do cpm2
+	jp bdos
+	ret
+
+sort2:	ld hl,liczby ; adres tabl dla procedury sortowania
+	ld c,(hl)
+	inc	hl
+	
+sort:	ld	(data), hl	; zapisanie adresu danych
+loop2:	res	flag, h	; ustawienie flagi
+	ld	b, c	; licznik liczb
+	dec	b	; dostosowanie b (czyli o -1)
+	ld	ix, (data)	; wska¿nik na dane
+next:	ld	a, (ix)	; pierwszy element
+	ld	d, a	; zapamiêtanie tymczasowe
+	ld	e, (ix+1)	; drugi element
+	sub	e	; sprawdzenie
+	jr	nc, noex	; pierwszy > drugi , nie skacz (czyli zamien)
+	ld	(ix), e	; zamiana elementow
+	ld	(ix+1), d	
+	set	flag, h	; zapisanie ¿e zmieniono
+noex:	inc	ix	; nastêpny element
+	djnz	next	; sprawdzenie czy wszystkie
+			; powtórka jesli jeszcze s¹ 
+	bit	flag, h	; czy zmiana by³a?
+	jr	nz, loop2	; powtórka jeœli jeszcze nie posortowane
+	ret
+data:	ds	2	; dane adresu danych
+liczby:	db	10,1ch,0ah,1dh,3eh,9fh,99h,00h,7ch,3eh,22h ; ciag do posortowania, pierwsza liczba to ilosæ elementó ci¹gu
+robocze:
+	db	0,0,0,0
+tekst:  db 	lf,'koniec $'
+przed:  db	'ciag liczb hex przed posortowaniem: $'
+wyn:	db	'ciag liczb hex po posortowaniu: $'
+	
+	end

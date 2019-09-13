@@ -1,0 +1,165 @@
+	MACRO-80 3.44	09-Dec-81	PAGE	1
+
+
+                                	.z80
+  0005                          bdos	equ	5
+  000A                          lf	equ 0Ah
+  0000                          flag 	equ 0
+  0009                          print	equ 9
+  0000                          reset 	equ 0
+  0000'                         	aseg
+  0000                          start:	org	100H
+  0100    11 01C2               	ld de,przed ; napis pocz9tkowy
+  0103    CD 0171               	call wysw
+  0106    CD 0126               	call wysw2	; wysw ciag przed posortowaniem	
+  0109    CD 017D               	call sort2	; skok do procedury sortowania
+  010C    1E 0A                 	ld e,lf	; nastjpna linia
+  010E    0E 02                 	ld c,2
+  0110    CD 0005               	call bdos
+  0113    11 01E7               	ld de,wyn	;napis po posortowaniu
+  0116    CD 0171               	call wysw
+  0119    CD 0126               	call wysw2	; wyswietlenie ci9gu po posortowaniu
+  011C    11 01B9               	ld de,tekst ; napis koniec
+  011F    CD 0171               	call wysw
+  0122    CD 0177               	call stop	; koniec programu zgodnie z systemem cpm2
+                                	
+  0125    C9                    	ret
+                                
+  0126    21 01AA               wysw2:	ld hl,liczby ; procedura wyswietlenia ciagu
+                                	
+  0129    4E                    	ld c, (hl)
+                                	
+  012A    23                    	inc hl
+  012B    56                    loop:	ld d,(hl) ; petla tak aby wszystkie wyswietlic
+  012C    C5                    	push bc
+  012D    D5                    	push de	; zapamietanie bo wysw zmienia zawartof
+                                	
+                                	
+  012E    E5                    	push hl ; zapamietanie pozycji
+  012F    F5                    	push af	; procedura zmienia a
+  0130    AF                    	xor	a
+  0131    7A                    	ld a,d ; liczba do a
+  0132    E6 0F                 	and	0fh ; tylko mniej znacz9ce
+  0134    C6 90                 	add	a,90H	;magiczne operacje, 
+  0136    27                    	daa		;ktore wartosc cyfry hex
+  0137    CE 40                 	adc	a,40H	;zamieniaja na ASCII
+  0139    27                    	daa		;0-9 30-39 A-F 41-45
+                                	
+  013A    DD 21 01B5            	ld ix,robocze	
+  013E    DD 77 00              	ld (ix),a	; zapamietanie w roboczych po przemianie na ascii
+  0141    AF                    	xor a
+  0142    ED 6F                 	rld		;4 bardziej znaczace 		z(hl)			bity do a 
+  0144    C6 90                 	add	a,90H	;magiczne operacje, 
+  0146    27                    	daa		;ktore wartosc cyfry hex
+  0147    CE 40                 	adc	a,40H	;zamieniaja na ASCII
+  0149    27                    	daa		;0-9 30-39 A-F 41-45
+                                	
+  014A    5F                    	ld	e,a	;znak do wypisania do e
+  014B    0E 02                 	ld	c,2	;funkcja pisz
+  014D    CD 0005               	call	bdos
+	MACRO-80 3.44	09-Dec-81	PAGE	1-1
+
+
+  0150    DD 5E 00              	ld e,(ix)	;mniej znacz9ce do e tsk by wypisaf na ekranie
+  0153    0E 02                 	ld c,2
+  0155    CD 0005               	call bdos	
+  0158    1E 68                 	ld	e,104	; literka h czyli hexadecymalnie
+  015A    0E 02                 	ld	c,2
+  015C    CD 0005               	call bdos
+  015F    1E 2C                 	ld	e,44	; przecinek po liczbie
+  0161    0E 02                 	ld	c,2
+  0163    CD 0005               	call bdos
+                                	;inc hl
+  0166    F1                    	pop af
+  0167    E1                    	pop hl
+  0168    D1                    	pop de
+  0169    72                    	ld (hl),d ; zapamijtanie d
+  016A    23                    	inc hl	; licznik na kolejn9 liczbj
+  016B    C1                     	pop bc
+  016C    0D                    	dec c
+  016D    C2 012B               	jp nz, loop ; czy wszystkie liczby?
+  0170    C9                    	ret
+                                
+  0171    0E 09                 wysw:   ld c,print	; wywietlenie napisu gdzie de wskazuje na ci9g znaksw
+                                ;	ld de,tekst
+  0173    CD 0005               	call bdos
+  0176    C9                    	ret
+  0177    0E 00                 stop:	ld c,reset	; procedura wyjcia z programu do cpm2
+  0179    C3 0005               	jp bdos
+  017C    C9                    	ret
+                                
+  017D    21 01AA               sort2:	ld hl,liczby ; adres tabl dla procedury sortowania
+  0180    4E                    	ld c,(hl)
+  0181    23                    	inc	hl
+                                	
+  0182    22 01A8               sort:	ld	(data), hl	; zapisanie adresu danych
+  0185    CB 84                 loop2:	res	flag, h	; ustawienie flagi
+  0187    41                    	ld	b, c	; licznik liczb
+  0188    05                    	dec	b	; dostosowanie b (czyli o -1)
+  0189    DD 2A 01A8            	ld	ix, (data)	; wska?nik na dane
+  018D    DD 7E 00              next:	ld	a, (ix)	; pierwszy element
+  0190    57                    	ld	d, a	; zapamijtanie tymczasowe
+  0191    DD 5E 01              	ld	e, (ix+1)	; drugi element
+  0194    93                    	sub	e	; sprawdzenie
+  0195    30 08                 	jr	nc, noex	; pierwszy > drugi , nie skacz (czyli zamien)
+  0197    DD 73 00              	ld	(ix), e	; zamiana elementow
+  019A    DD 72 01              	ld	(ix+1), d	
+  019D    CB C4                 	set	flag, h	; zapisanie ?e zmieniono
+  019F    DD 23                 noex:	inc	ix	; nastjpny element
+  01A1    10 EA                 	djnz	next	; sprawdzenie czy wszystkie
+                                			; powtsrka jesli jeszcze s9 
+  01A3    CB 44                 	bit	flag, h	; czy zmiana by3a?
+  01A5    20 DE                 	jr	nz, loop2	; powtsrka jeli jeszcze nie posortowane
+  01A7    C9                    	ret
+  01A8                          data:	ds	2	; dane adresu danych
+  01AA    0A 1C 0A 1D           liczby:	db	10,1ch,0ah,1dh,3eh,9fh,99h,00h,7ch,3eh,22h ; ciag do posortowania, pierwsza liczba to ilosf elements ci9gu
+  01AE    3E 9F 99 00           
+  01B2    7C 3E 22              
+  01B5                          robocze:
+	MACRO-80 3.44	09-Dec-81	PAGE	1-2
+
+
+  01B5    00 00 00 00           	db	0,0,0,0
+  01B9    0A 6B 6F 6E           tekst:  db 	lf,'koniec $'
+  01BD    69 65 63 20           
+  01C1    24                    
+  01C2    63 69 61 67           przed:  db	'ciag liczb hex przed posortowaniem: $'
+  01C6    20 6C 69 63           
+  01CA    7A 62 20 68           
+  01CE    65 78 20 70           
+  01D2    72 7A 65 64           
+  01D6    20 70 6F 73           
+  01DA    6F 72 74 6F           
+  01DE    77 61 6E 69           
+  01E2    65 6D 3A 20           
+  01E6    24                    
+  01E7    63 69 61 67           wyn:	db	'ciag liczb hex po posortowaniu: $'
+  01EB    20 6C 69 63           
+  01EF    7A 62 20 68           
+  01F3    65 78 20 70           
+  01F7    6F 20 70 6F           
+  01FB    73 6F 72 74           
+  01FF    6F 77 61 6E           
+  0203    69 75 3A 20           
+  0207    24                    
+                                	
+                                	end
+	MACRO-80 3.44	09-Dec-81	PAGE	S
+
+
+Macros:
+
+Symbols:
+0005 	BDOS            01A8 	DATA            0000 	FLAG            
+000A 	LF              01AA 	LICZBY          012B 	LOOP            
+0185 	LOOP2           018D 	NEXT            019F 	NOEX            
+0009 	PRINT           01C2 	PRZED           0000 	RESET           
+01B5 	ROBOCZE         0182 	SORT            017D 	SORT2           
+0000 	START           0177 	STOP            01B9 	TEKST           
+01E7 	WYN             0171 	WYSW            0126 	WYSW2           
+
+
+
+No Fatal error(s)
+
+
